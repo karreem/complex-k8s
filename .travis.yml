@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+service:
+  - docker
+
+before_install:
+  - docker build -t karreem/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true karreem/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t karreem/multi-client ./client
+  - docker build -t karreem/multi-nginx ./nginx
+  - docker build -t karreem/multi-server ./server 
+  - docker build -t karreem/multi-worker ./worker
+  #Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push karreem/multi-client
+  - docker push karreem/multi-nginx
+  - docker push karreem/multi-server 
+  - docker push karreem/multi-worker
